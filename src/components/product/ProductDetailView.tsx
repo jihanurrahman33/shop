@@ -11,7 +11,9 @@ import {
   SlidersHorizontal,
   ChevronDown,
 } from "lucide-react";
-import { Product, REVIEWS, PRODUCTS } from "@/data/products";
+import { Product } from "@/types/product";
+import { REVIEWS } from "@/data/products";
+import { productService } from "@/services/productService";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
@@ -37,8 +39,8 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
   );
   const [addedToast, setAddedToast] = useState<boolean>(false);
 
-  // Recommendations: exclude current product
-  const recommendations = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  // Recommendations using repository
+  const recommendations = productService.getRelated(product.id, 4);
 
   const handleAddToCart = () => {
     addToCart(product, selectedSize, selectedColor, quantity);

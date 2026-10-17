@@ -1,11 +1,11 @@
 import React from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { PRODUCTS } from "@/data/products";
+import { productService } from "@/services/productService";
 import { ProductCard } from "@/components/ui/ProductCard";
 
 export default function NotFound() {
-  const suggestedProducts = PRODUCTS.slice(0, 4);
+  const suggestedProducts = productService.getAll().slice(0, 4);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">

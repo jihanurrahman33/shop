@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { PRODUCTS } from "@/data/products";
+import { productService } from "@/services/productService";
 import { ProductDetailView } from "@/components/product/ProductDetailView";
 
 export function generateStaticParams() {
-  return PRODUCTS.map((product) => ({
+  return productService.getAll().map((product) => ({
     id: product.id,
   }));
 }
@@ -14,7 +14,7 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = PRODUCTS.find((p) => p.id === id);
+  const product = productService.getById(id);
 
   if (!product) {
     notFound();

@@ -1,32 +1,7 @@
-export interface Product {
-  id: string;
-  name: string;
-  slug: string;
-  price: number;
-  originalPrice?: number;
-  discountPercentage?: number;
-  rating: number;
-  ratingCount: number;
-  description: string;
-  category: "T-shirts" | "Shorts" | "Shirts" | "Hoodie" | "Jeans";
-  dressStyle: "Casual" | "Formal" | "Party" | "Gym";
-  colors: { name: string; hex: string }[];
-  sizes: ("XX-Small" | "X-Small" | "Small" | "Medium" | "Large" | "X-Large" | "XX-Large" | "3X-Large" | "4X-Large")[];
-  images: string[];
-  isNewArrival?: boolean;
-  isTopSelling?: boolean;
-}
+import { Product } from "@/types/product";
+import { Review, Testimonial } from "@/types/review";
 
-export interface Review {
-  id: string;
-  author: string;
-  rating: number;
-  verified: boolean;
-  comment: string;
-  date: string;
-}
-
-export const PRODUCTS: Product[] = [
+export const PRODUCTS: readonly Product[] = [
   {
     id: "1",
     name: "T-SHIRT WITH TAPE DETAILS",
@@ -274,9 +249,9 @@ export const PRODUCTS: Product[] = [
     sizes: ["Small", "Medium", "Large", "X-Large"],
     images: ["/images/product-black-striped-tshirt.png"],
   },
-];
+] as const;
 
-export const REVIEWS: Review[] = [
+export const REVIEWS: readonly Review[] = [
   {
     id: "r1",
     author: "Samantha D.",
@@ -331,9 +306,9 @@ export const REVIEWS: Review[] = [
       "I'm not just wearing a t-shirt; I'm wearing a piece of design philosophy. The intricate details and thoughtful layout of the design make this shirt a conversation starter.",
     date: "August 19, 2023",
   },
-];
+] as const;
 
-export const TESTIMONIALS = [
+export const TESTIMONIALS: readonly Testimonial[] = [
   {
     id: "t1",
     author: "Sarah M.",
@@ -355,11 +330,4 @@ export const TESTIMONIALS = [
     verified: true,
     text: "As someone who's always on the lookout for unique fashion pieces, I'm thrilled to have stumbled upon Shop.co. The selection of clothes is not only diverse but also on-point with the latest trends.",
   },
-];
-
-export const DRESS_STYLES = [
-  { name: "Casual", image: "/images/style-casual.png", href: "/category?style=Casual", span: "md:col-span-4" },
-  { name: "Formal", image: "/images/style-formal.png", href: "/category?style=Formal", span: "md:col-span-8" },
-  { name: "Party", image: "/images/style-party.png", href: "/category?style=Party", span: "md:col-span-8" },
-  { name: "Gym", image: "/images/style-gym.png", href: "/category?style=Gym", span: "md:col-span-4" },
-];
+] as const;

@@ -1,18 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Product } from "@/data/products";
-
-export interface CartItem {
-  id: string; // product id + size + color
-  productId: string;
-  name: string;
-  price: number;
-  size: string;
-  color: string;
-  image: string;
-  quantity: number;
-}
+import { Product } from "@/types/product";
+import { CartItem, OrderPricing } from "@/types/cart";
+import { appStorage } from "@/lib/storage";
+import { defaultPricingService, PricingService } from "@/services/pricingService";
 
 interface CartContextType {
   cart: CartItem[];
@@ -21,18 +13,17 @@ interface CartContextType {
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
   cartCount: number;
+  pricing: OrderPricing;
+  promoCode: string;
+  applyPromoCode: (code: string) => boolean;
   subtotal: number;
   discount: number;
   deliveryFee: number;
   total: number;
-  promoCode: string;
-  applyPromoCode: (code: string) => boolean;
-  promoDiscount: number;
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const CART_STORAGE_KEY = "shop_cart";
 
-// Initial default items matching the Figma Cart design
 const INITIAL_CART: CartItem[] = [
   {
     id: "11-Large-White",
@@ -66,39 +57,40 @@ const INITIAL_CART: CartItem[] = [
   },
 ];
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("shop_cart");
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return INITIAL_CART;
-  });
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
+interface CartProviderProps {
+  children: React.ReactNode;
+  pricingService?: PricingService;
+}
+
+export function CartProvider({
+  children,
+  pricingService = defaultPricingService,
+}: CartProviderProps) {
+  const [cart, setCart] = useState<CartItem[]>(() =>
+    appStorage.getItem(CART_STORAGE_KEY, INITIAL_CART)
+  );
   const [promoCode, setPromoCode] = useState<string>("");
-  const [promoApplied, setPromoApplied] = useState<boolean>(true); // default -20% discount as shown in Figma
 
   useEffect(() => {
-    try {
-      localStorage.setItem("shop_cart", JSON.stringify(cart));
-    } catch {
-      // ignore
-    }
+    appStorage.setItem(CART_STORAGE_KEY, cart);
   }, [cart]);
 
-  const addToCart = (product: Product, size: string, color: string, quantity: number) => {
+  const addToCart = (
+    product: Product,
+    size: string,
+    color: string,
+    quantity: number
+  ) => {
     const cartItemId = `${product.id}-${size}-${color}`;
     setCart((prev) => {
       const existing = prev.find((item) => item.id === cartItemId);
       if (existing) {
         return prev.map((item) =>
-          item.id === cartItemId ? { ...item, quantity: item.quantity + quantity } : item
+          item.id === cartItemId
+            ? { ...item, quantity: item.quantity + quantity }
+            : item
         );
       }
       return [
@@ -127,7 +119,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setCart((prev) =>
-      prev.map((item) => (item.id === cartItemId ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.id === cartItemId ? { ...item, quantity } : item
+      )
     );
   };
 
@@ -136,21 +130,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   };
 
   const applyPromoCode = (code: string) => {
-    if (code.trim().toUpperCase() === "SHOP20") {
-      setPromoApplied(true);
-      setPromoCode(code);
-      return true;
-    }
-    setPromoApplied(true); // Allow standard promo for testing
     setPromoCode(code);
     return true;
   };
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const promoDiscount = promoApplied ? Math.round(subtotal * 0.2) : 0;
-  const deliveryFee = subtotal > 0 ? 15 : 0;
-  const total = subtotal - promoDiscount + deliveryFee;
+  const pricing = pricingService.calculate(cart, promoCode);
 
   return (
     <CartContext.Provider
@@ -161,13 +146,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         updateQuantity,
         clearCart,
         cartCount,
-        subtotal,
-        discount: promoDiscount,
-        deliveryFee,
-        total,
+        pricing,
         promoCode,
         applyPromoCode,
-        promoDiscount,
+        subtotal: pricing.subtotal,
+        discount: pricing.discount,
+        deliveryFee: pricing.deliveryFee,
+        total: pricing.total,
       }}
     >
       {children}
